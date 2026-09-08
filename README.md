@@ -15,8 +15,8 @@
 ## Estado de la prueba
 
 - **Escaneo de todas las pantallas del menú** → `escaneo-plataforma/`
-- **Pruebas funcionales con creación real** (catálogo LXC, bases de datos, despliegue desde GitHub, publicación en proxy) → `aplicaciones/`, `operacion/`
-- **Comparativa contra el manual de operación** → `index.md` (# resumen)
+- **Pruebas funcionales con creación real** (catálogo LXC, bases de datos PostgreSQL/MariaDB, despliegues Dockerfile/Compose/nixpacks, publicación en proxy y por túnel) → `aplicaciones/`, `operacion/`
+- **Comparativa contra el manual de operación** → [`index.md`](index.md) y [`comparativa-hallazgos.md`](comparativa-hallazgos.md)
 
 ## Estructura del repositorio
 
@@ -30,9 +30,9 @@ tuxconsole-qa/
 │   ├── catalogo-lxc/
 │   └── contenedores-docker/
 ├── aplicaciones/
-│   ├── despliegues/             # Deploy real desde GitHub (Dockerfile)
-│   ├── sitios-web/              # Proxy inverso, ruteo por nombre
-│   └── bases-de-datos/          # Instancia PG15 real + CRUD
+│   ├── despliegues/             # Deploy desde GitHub: Dockerfile, Compose y nixpacks
+│   ├── sitios-web/              # Proxy inverso, ruteo por nombre + túnel a internet
+│   └── bases-de-datos/          # PostgreSQL y MariaDB + CRUD real
 ├── operacion/
 │   ├── red-proxmox-firewall/
 │   └── gateway-vpn-dhcp-dns/
@@ -56,20 +56,21 @@ tuxconsole-qa/
 |---|---|
 | Login + API | ✅ operativo |
 | Dashboard y Nodos | ✅ operativo |
-| Máquinas virtuales | ✅ listado/protección (VM infraestructura, sin arrancar) |
+| Máquinas virtuales | ✅ creación + encendido real con ISO (Ubuntu); consola (flujo/API) validada |
 | Catálogo LXC | ✅ instalación real (qa-nginx), ciclo completo, revertido |
 | Contenedores Docker | ✅ host operativo |
-| Despliegue desde GitHub | ✅ **app tuxqa-hello desplegada y verificada (HTTP 200)** |
+| Despliegue desde GitHub | ✅ **3 modos: Dockerfile + Compose + nixpacks (HTTP 200)** |
 | Sitios web / proxy | ✅ publicación local + ruteo por nombre |
-| Bases de datos | ✅ instancia PG15, usuarios, CRUD real, revertido |
+| Publicación a internet (túnel) | ✅ validada (HTTPS 200) y retirada |
+| Bases de datos | ✅ PostgreSQL y MariaDB + CRUD real, revertido |
 | Red Proxmox / firewall | ✅ lectura (firewall inactivo → nota) |
 | Gateway / VPN / DHCP / DNS | ⚠️ no configurados (correcto, dependen de appliance) |
-| Usuarios y roles | ✅ roles verificados |
+| Usuarios y roles | ✅ 3 roles del sistema + rol a medida validados (enforcement) |
 | Configuración | ✅ operativo |
-| Backups / Alta disponibilidad | ⚠️ no ejecutados (VM protegida / no implementado) |
+| Backups / Alta disponibilidad | ✅ snapshot+rollback frío y en caliente · HA no implementada |
 
 ## ⚠️ Notas de seguridad / alcance
 
-- Entorno de **evaluación de un tercero** (operación tuxadvisor.net). No se realizaron acciones destructivas permanentes; los recursos de prueba se revirtieron salvo la app `tuxqa-hello` que quedó en ejecución para validación.
-- No se expuso ningún servicio a internet.
-- Credenciales de la documentación: solo de referencia del ambiente de pruebas; no publicar hacia producción.
+- Entorno de **evaluación de un tercero** (operación del proveedor del panel). No se realizaron acciones destructivas permanentes; los recursos de prueba se revirtieron. Quedan en ejecución solo las apps de demostración local (`tuxqa-hello`, `tuxqa-compose`, `tuxqa-nixpacks`).
+- **Exposición a internet retirada** tras validarla (el sitio volvió a estado local).
+- No se publica ninguna credencial real ni identificador interno de cuenta/tenant en este repositorio; solo placeholders y referencias del ambiente bajo prueba.

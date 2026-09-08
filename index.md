@@ -4,7 +4,7 @@
 
 Este repositorio documenta la **validación de la plataforma TuxConsole** (panel de gestión sobre Proxmox). El trabajo siguió el "recorrido de prueba" sugerido por el manual de operación de la plataforma y lo extendió con **pruebas funcionales reales** (creación/borrado de recursos sobre el nodo Proxmox `nariv`), verificadas de extremo a extremo.
 
-**Veredicto:** la plataforma está **operativa y funcional**. Las 8 funcionalidades del recorrido oficial operan según lo documentado, salvo las que la propia guía condiciona a la infraestructura protegida del sistema o al estado de licencia/appliance. Se listan hallazgos y oportunidades al final.
+**Veredicto:** la plataforma está **operativa y funcional**. Todas las funcionalidades del recorrido oficial se ejecutaron y validaron de punta a punta con recursos reales (VMs, LXC, bases de datos, despliegues, sitio web público y control de permisos), salvo dos límites por *coste/seguridad* que se detallan más abajo (ver `## Límites no cubiertos y por qué`).
 
 ## Tabla de cobertura (guía vs. comportamiento real)
 
@@ -12,13 +12,13 @@ Este repositorio documenta la **validación de la plataforma TuxConsole** (panel
 |---|---|---|---|
 | 1 | Dashboard y Nodos | Métricas en vivo, almacenamiento, tema | ✅ |
 | 2 | Catálogo LXC → crear contenedor | Instalación real `qa-nginx` (TurnKey 18), HTTP 200, luego eliminado | ✅ |
-| 3 | Consola gráfica de VM | VM única es infraestructura **protegida** → no arrancada | ⚠️ |
+| 3 | Consola gráfica de VM | VM real `qa-vm-ubuntu` con ISO de Ubuntu encendida; botón Consola habilitado, modal abierto y `vncproxy` entregó ticket+puerto VNC | ✅ (flujo/API) |
 | 4 | Despliegue desde repo (Dockerfile) | Repo GitHub propio → build → contenedor vivo | ✅ |
 | 5 | Publicar en dominio (Sitios web) | Sitio local `tuxqa-hello.local`, ruteo por nombre verificado | ✅ |
-| 6 | Crear BD y conectar la app | Instancia PostgreSQL 15 + CRUD real + conexión TCP | ✅ |
-| 7 | Crear usuario Operador (permisos) | Enforcement de Operador, Solo lectura y rol a medida verificado (usuarios temporales borrados) | ✅ |
-| 8 | Backup y restauración | Snapshot + rollback real validados sobre VM de prueba (eliminada) | ✅ |
-| 9 | Publicación a internet (túnel) | App expuesta por subdominio `tuxadvisor.net` (HTTPS 200) y retirada | ✅ |
+| 6 | Crear BD y conectar la app | Instancias **PostgreSQL 15** y **MariaDB 11.4** + CRUD real + conexión TCP | ✅ |
+| 7 | Crear usuario Operador (permisos) | Enforcement de Operador, Solo lectura y rol a medida verificado (usuarios/roles temporales borrados) | ✅ |
+| 8 | Backup y restauración | Snapshot + rollback en **frío y en caliente** sobre VMs reales (disco 20G encendida) | ✅ |
+| 9 | Publicación a internet (túnel) | App expuesta por subdominio del proveedor (HTTPS 200) y retirada | ✅ |
 | 10 | Modos de despliegue | Dockerfile · docker-compose · constructor automático (nixpacks) — 3/3 | ✅ |
 
 Detalle por pantalla → ver carpetas. Comparativa extendida y hallazgos → sección [Hallazgos y comparativa frente al manual](comparativa-hallazgos.md).
@@ -35,4 +35,13 @@ Detalle por pantalla → ver carpetas. Comparativa extendida y hallazgos → sec
 ## Evidencias
 
 - Capturas por pantalla y de la app desplegada en [`evidencias/`](evidencias/).
-- Artefactos de despliegue (repo público de ejemplo `tuxqa-hello`).
+- Artefactos de despliegue (repos públicos de ejemplo `tuxqa-hello`, `tuxqa-compose`, `tuxqa-nixpacks`).
+
+## Límites no cubiertos y por qué
+
+Estos dos puntos **no pudieron verificarse a nivel de contenido**, y se dejan escritos por transparencia (ambos son de *coste/entorno*, no fallos del panel):
+
+1. **Ver el render píxel interior de la consola de VM.** Se validó el flujo completo de consola (botón habilitado solo con VM encendida, modal abierto, y el servidor `vncproxy` que entrega el ticket VNC para el navegador). El **contenido visual** (pantalla del instalador/escritorio) no pudo leerse en la sesión de QA: el backend de análisis visual devolvió "unsupported image" de forma repetida y el DOM del visor noVNC quedó bloqueado por las restricciones de seguridad del navegador. No se afirma haber visto píxeles; solo que el flujo de apertura de consola responde.
+2. **Restauración verificando el *contenido interno* de un SO** (instalar Ubuntu completo → inyectar archivos → snapshot → rollback → comprobar que los archivos volvieron). Se validó el snapshot+rollback en frío y en caliente sobre VMs con disco real, pero reproducir la instalación completa del SO requiere pasar el instalador interactivo por consola, no automatizable/verificable de forma fiable en esta sesión.
+
+En ambos casos la **funcionalidad subyacente está operativa** (la operación de VM, snapshot/rollback y apertura de consola responden y se devuelven IDs/estados correctos); el único hueco es la comprobación profunda de contenido en pantalla y dentro del SO instalado.

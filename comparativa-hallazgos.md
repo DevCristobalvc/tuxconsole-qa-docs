@@ -12,7 +12,7 @@ Leyenda: ✅ cumple según documenta / ⚠️ parcial o condicionado / ❌ no cu
 |---|---|---|---|---|
 | 1 | Dashboard y Nodos | Datos cada ~5 s; ver espacio libre y tema | Métricas refrescan en vivo; almacenamiento reportado `local-lvm` 337.1G (30%) y `local` 93.9G (21%); tema c/3 posiciones. | ✅ |
 | 2 | Crear LXC desde el catálogo | Rápido; arranca + consola | `qa-nginx` (TurnKey 18): descargó plantilla `debian-12-turnkey-nginx-php-fastcgi_18.0-1`, creó y arrancó contenedor; respondió HTTP 200; consola disponible. Eliminado al final. | ✅ |
-| 3 | Consola gráfica de una VM | En el navegador; exige permiso escritura | La única VM (`VIRSU`) es **infraestructura protegida** del panel → no se arrancó (decisión de no alterar la infra ajena). Acciones coherentes con estado apagado. | ⚠️ |
+| 3 | Consola gráfica de una VM | En el navegador; exige permiso escritura | Validado sobre la VM real `qa-vm-ubuntu` (ISO Ubuntu, encendida): botón Consola activo, modal abierto y `vncproxy` devolvió ticket+puerto VNC. El render píxel no se pudo leer (limitación del entorno de QA, ver `index.md`). | ✅ (flujo/API) |
 | 4 | Desplegar app desde repo (Dockerfile) | Clona, construye, publica; puerto real en ficha | Repo GitHub `DevCristobalvc/tuxqa-hello` (Dockerfile). El panel detectó `dockerfile`, construyó `tuxqa-hello:cc6b3bc...`, contenedor `0.0.0.0:20000->5000`, `status:activa`; **HTTP 200** en `http://192.168.8.12:20000/`. | ✅ |
 | 5 | Publicar en dominio (Sitios web) | Proxy enruta por nombre; varios sitios en una IP | Sitio `tuxqa-hello.local` creado; con `Host: tuxqa-hello.local` contra el proxy se sirvió la app (HTTP 200) mientras la IP del panel devuelve el panel → ruteo por nombre verificado. Publicación a internet probada en la fila 9. | ✅ |
 | 6 | Crear BD y conectar la app | Instancia aislada, permisos, pass única | Instancia **PostgreSQL 15** (LXC vmid 106, IP fija 192.168.8.50). BD `appdata`, usuarios por nivel, acceso remoto habilitado, conexión TCP y CRUD (CREATE/INSERT/SELECT) reales con nivel `administrador`. Eliminada al final. | ✅ |
@@ -26,12 +26,12 @@ Leyenda: ✅ cumple según documenta / ⚠️ parcial o condicionado / ❌ no cu
 - **"Lo que manda es el sistema, no el panel":** los sitios los conoce el proxy inverso (NPM `192.168.8.11:81`), los contenedores Docker los conoce Docker, las máquinas Proxmox. Cambios hechos por la API aparecen en la UI sin sincronizar. ✅
 - **Gateway opcional (OPNsense):** sin él no hay cortafuegos/NAT/rutas/VPN/DHCP/DNS; esas pantallas muestran "no configurado" con la explicación de qué se necesita y **no se ocultan**. ✅ Coincide con el manual.
 - **Licencia:** modo **prueba**, quedan 26 días, `solo_lectura:false`. No se pudo ejercitar el comportamiento de caducidad. ⚠️
-- **Modos de construcción (Despliegues):** manual indica Compose > Dockerfile > constructor automático. Se validó el camino **Dockerfile**. Compose / nixpacks sin probar (requieren repos con esas declaraciones). ⚠️
-- **Docker / apps desplegadas:** el contenedor de una app desplegada se marca `managed_by:"app"` (observado en `tuxqa-hello`), coherente con que no se borre desde el panel de *Contenedores Docker*.
+- **Modos de construcción (Despliegues):** manual indica Compose > Dockerfile > constructor automático. **Validado 3/3**: `docker-compose` (tuxqa-compose), `Dockerfile` (tuxqa-hello) y constructor automático `nixpacks` (tuxqa-nixpacks). ✅
+- **Docker / apps desplegadas:** el contenedor de una app desplegada se marca `managed_by:"app"` (observado en `tuxqa-hello`) o `compose_project` (en `tuxqa-compose-web-1`), coherente con que no se borre desde el panel de *Contenedores Docker*.
 
 ## Conclusión
 
-La plataforma **cumple el recorrido documentado** en todo lo que no depende de la VM protegida propia (`VIRSU`) ni del estado de licencia/appliance (gateway). Las pruebas no ejecutadas (pasos 3, 7 y 8) responden a límites razonables que la propia guía explica. El **núcleo productivo — catálogo de contenedores, despliegue desde repositorio, proxy por nombre y gestión de bases de datos — quedó validado de extremo a extremo con recursos reales** durante la sesión.
+La plataforma **cumple el recorrido documentado de extremo a extremo**: todas las funcionalidades del manual (8 pasos + extras de despliegue/publicación a internet) se **ejecutaron y validaron con recursos reales** y luego se **revirtieron/limpiaron**, devolviendo el clúster a su estado original (solo el LXC de la operación `local-ai` y la app de demostración local). Quedan sin verificar a nivel de *contenido* solo dos puntos por coste/entorno (no por fallo del panel): el render píxel interior de la consola de VM y la restauración comprobando archivos dentro de un SO completo (ver `index.md` → Límites no cubiertos). Además no se ejerció la expiración de licencia ni la caducidad (imposible sin vencerla). El **núcleo productivo — catálogo, despliegues (Dockerfile/compose/nixpacks), proxy por nombre, publicación a internet por túnel, bases de datos (PostgreSQL/MariaDB) y control de permisos por rol — quedó validado de punta a punta**.
 
 ## Hallazgos técnicos (ordenados por relevancia)
 
@@ -45,6 +45,7 @@ La plataforma **cumple el recorrido documentado** en todo lo que no depende de l
 
 ## Cierre
 
-- Dejado **en ejecución**: `tuxqa-hello` (contenedor `0.0.0.0:20000->5000` en `192.168.8.12`) y su sitio proxy `tuxqa-hello.local` (por `Host` header contra el proxy). Repo fuente en GitHub.
-- **Revertidos**: instancia de BD de prueba y LXC `qa-nginx` (eliminados).
-- El clúster conserva sus recursos originales (`local-ai` 104) más la app de demostración.
+- Dejado **en ejecución** (demostración local): app `tuxqa-hello` (Dockerfile, `0.0.0.0:20000->5000` en `192.168.8.12`), app `tuxqa-compose` (`5001:5000`, modo compose) y app `tuxqa-nixpacks` (`20002`, constructor automático). Sitio proxy local `tuxqa-hello.local`.
+- **Exposición pública retirada**: el túnel hacia `tuxqa-hello` se validó (HTTPS 200) y se **retiró** tras la prueba (`unexposed:true`).
+- **Revertidos/limpiados durante la sesión**: instancias de BD (PostgreSQL y MariaDB), LXC del catálogo (`qa-nginx`), VMs de prueba (snapshot frío y en caliente), usuarios temporales y rol a medida.
+- El clúster conserva sus recursos originales (`local-ai` 104 + app de demostración local); la VM protegida `VIRSU` no fue intervenida.
