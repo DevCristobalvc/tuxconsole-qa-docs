@@ -16,8 +16,10 @@ Este repositorio documenta la **validación de la plataforma TuxConsole** (panel
 | 4 | Despliegue desde repo (Dockerfile) | Repo GitHub propio → build → contenedor vivo | ✅ |
 | 5 | Publicar en dominio (Sitios web) | Sitio local `tuxqa-hello.local`, ruteo por nombre verificado | ✅ |
 | 6 | Crear BD y conectar la app | Instancia PostgreSQL 15 + CRUD real + conexión TCP | ✅ |
-| 7 | Crear usuario Operador (permisos) | Roles verificados; no se creó cuenta (estado permanente) | ⚠️ |
-| 8 | Backup y restauración | No ejecutado (opera sobre VM protegida) | ⚠️ |
+| 7 | Crear usuario Operador (permisos) | Enforcement de Operador, Solo lectura y rol a medida verificado (usuarios temporales borrados) | ✅ |
+| 8 | Backup y restauración | Snapshot + rollback real validados sobre VM de prueba (eliminada) | ✅ |
+| 9 | Publicación a internet (túnel) | App expuesta por subdominio `tuxadvisor.net` (HTTPS 200) y retirada | ✅ |
+| 10 | Modos de despliegue | Dockerfile · docker-compose · constructor automático (nixpacks) — 3/3 | ✅ |
 
 Detalle por pantalla → ver carpetas. Comparativa extendida y hallazgos → sección [Hallazgos y comparativa frente al manual](comparativa-hallazgos.md).
 

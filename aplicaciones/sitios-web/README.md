@@ -40,5 +40,9 @@ curl -sk -H "Host: tuxqa-hello.local" http://192.168.8.11/
 
 ## Hallazgos / notas
 
-- **Publicación a internet (túnel `tuxadvisor.net`): NO ejecutada — pendiente de autorización explícita.** Exponer un sitio abre al público un recurso local; la propia plataforma lo trata como decisión explícita y avisada. Al autorizar, se haría un túnel temporal sobre el dominio de prueba existente (`tuxqa-hello.local`) y luego se retiraría. La modalidad está disponible según `/api/sites/status` y `Configuración → Publicación en internet`.
-- En paralelo se validó por completo la publicación **local** por proxy (ruteo por nombre en una única IP), ver `Resultado`.
+- **Publicación a internet (túnel `tuxadvisor.net`): PROBADA y retirada temporalmente (✅).** Se expuso `tuxqa-hello` en modo gestión (subdominio `tuxqaqa-praktil-21be.tuxadvisor.net`). Validado:
+  - `POST /api/sites/{id}/tunnel` `{mode:"gestionado", label:"..."}` → URL pública HTTPS entregada; el túnel global se reporta activo (1 conexión, base `tuxadvisor.net`, slug `praktil`).
+  - Acceso HTTPS público del dominio sirvió la app (HTTP 200). Resolución pública del dominio → IP de edge Cloudflare (104.16.x).
+  - Retirada inmediata tras validar: `DELETE /api/sites/{id}/tunnel` → `{"unexposed":true}`, `public_url` vuelve a `None`.
+  - El modo "dominio propio" requiere conectar una cuenta Cloudflare (no disponible en el ambiente; `customer.configured:false`).
+- La publicación **local** por proxy (ruteo por nombre en una única IP) validada en paralelo.

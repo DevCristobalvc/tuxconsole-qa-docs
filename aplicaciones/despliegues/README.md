@@ -50,5 +50,9 @@ curl -s http://192.168.8.12:20000/
 
 ## Hallazgos / notas
 
-- Se validó la vía **Dockerfile** (la recomendada por la guía). Compose y nixpacks no probados (requieren repos que lo declaren).
-- El `access_token` del panel caduca (~minutos/hora); refrescarlo con `/api/auth/login` antes de cada tanda (los `401 "Credenciales inválidas"` observados eran por token antiguo, no por fallo del host).
+- **Modos de construcción validados (3/3):**
+  - **Dockerfile** → `tuxqa-hello` (HTTP 200 en `http://192.168.8.12:20000/`).
+  - **docker-compose** → `tuxqa-compose` (repo sin Dockerfile+compose; `detected_mode:compose`; HTTP 200 en `http://192.168.8.12:5001/`, puerto que define el propio compose `5001:5000`). Coincide con la guía: en modo Compose **los puertos los define el fichero**, no el rango del panel.
+  - **Constructor automático (nixpacks)** → `tuxqa-nixpacks` (repo Node/Express **sin** Dockerfile ni compose; `detected_mode:nixpacks`; HTTP 200 en `http://192.168.8.12:20002/`).
+- El `access_token` del panel caduca (~minutos); refrescarlo con `/api/auth/login` antes de cada tanda (los `401 "Credenciales inválidas"` eran por token antiguo, no por fallo del host).
+- Repos de ejemplo creados en GitHub: `DevCristobalvc/tuxqa-hello`, `DevCristobalvc/tuxqa-compose`, `DevCristobalvc/tuxqa-nixpacks`.

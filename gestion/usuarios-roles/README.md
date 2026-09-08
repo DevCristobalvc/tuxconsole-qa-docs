@@ -44,7 +44,18 @@ Los tres roles del sistema se comportan según la documentación: el control de 
 
 ## Qué queda pendiente
 
-- La prueba confirmó el control de acceso server-side para los **3 roles del sistema**. No se validó un rol a medida (escritura solo en un área) creado desde el panel; es el único escenario de roles personalizados sin ejercitar, y requiere la decisión de dejar un rol extra creado.
+- La prueba confirmó el control de acceso server-side para los **3 roles del sistema** y para un **rol a medida**. Nota: el rol a medida (`QA_Solo_Apps`: escritura `solo` en aplicaciones, resto `ninguno`) se creó, se le asignó un usuario temporal, se validó y se **eliminó** tras la prueba (usuario + rol borrados). No se dejó ningún rol/usuario extra; el ambiente queda con solo los 3 roles del sistema y el usuario `admin`.
+
+### Detalle de la prueba del rol a medida
+
+1. `POST /api/users/roles` creó `QA_Solo_Apps` (permisos: infraestructura/cómputo/red/usuarios = `ninguno`; aplicaciones = `escritura`).
+2. Se creó un usuario temporal con ese rol y se hizo login.
+3. Enforcement verificado:
+   - `GET /api/sites` → **200**; `POST /api/sites` (crear sitio) → **201** ✅ (puede escribir en aplicaciones).
+   - `GET /api/nodes` → **403** ✅ (infraestructura `ninguno`).
+   - Detener un LXC → **403** "Tu rol no permite modificar «Máquinas virtuales…»" ✅ (cómputo `ninguno`).
+   - `GET /api/users` → **403** ✅ (usuarios `ninguno`).
+4. Limpieza: sitio de prueba, usuario y rol eliminados (204).
 
 ## Comandos
 
