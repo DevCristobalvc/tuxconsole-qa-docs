@@ -40,4 +40,5 @@ curl -sk -H "Host: tuxqa-hello.local" http://192.168.8.11/
 
 ## Hallazgos / notas
 
-- **Publicación a internet (túnel `tuxadvisor.net`) no probada**: expone un servicio al público; requiere confirmación explícita. La modalidad de túnel está disponible según `/api/sites/status` y `Configuración → Publicación en internet`.
+- **Publicación a internet (túnel `tuxadvisor.net`): NO ejecutada — pendiente de autorización explícita.** Exponer un sitio abre al público un recurso local; la propia plataforma lo trata como decisión explícita y avisada. Al autorizar, se haría un túnel temporal sobre el dominio de prueba existente (`tuxqa-hello.local`) y luego se retiraría. La modalidad está disponible según `/api/sites/status` y `Configuración → Publicación en internet`.
+- En paralelo se validó por completo la publicación **local** por proxy (ruteo por nombre en una única IP), ver `Resultado`.
