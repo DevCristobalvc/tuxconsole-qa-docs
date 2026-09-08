@@ -16,20 +16,35 @@ Cuentas del panel y permisos por área (`/usuarios`).
 
 - Lectura de cuentas y roles (`/api/users`, `/api/users/roles`, `/api/users/areas`).
 - Verificación de las salvaguardas de la UI (roles del sistema bloqueados; no puedes eliminar tu propia cuenta).
+- **Prueba funcional de permisos con cuentas temporales** (eliminadas al terminar). Se creó un usuario con rol **Operador** y otro con rol **Solo lectura**, se hizo login con cada uno y se probó que el backend **aplica de verdad** los permisos declarados (no solo la UI los muestra). Luego se borraron ambas cuentas, dejando de nuevo solo `admin`.
 
 ## Resultado
 
 | Rol | Infrastr. | Cómputo | Aplicaciones | Red | Usuarios | Cuentas |
 |---|---|---|---|---|---|---|
 | Administrador | Escritura | Escritura | Escritura | Escritura | Escritura | 1 |
-| Operador | Lectura | Escritura | Escritura | Escritura | — | 0 |
-| Solo lectura | Lectura | Lectura | Lectura | Lectura | — | 0 |
+| Operador | Lectura | Escritura | Escritura | Escritura | — | (0 tras prueba) |
+| Solo lectura | Lectura | Lectura | Lectura | Lectura | — | (0 tras prueba) |
 
-Cuenta actual: `admin` (Admon., Activa, rol Administrador). Salvaguardas presentes. Resultado: ✅.
+### Verificación del enforcement (prueba real)
+
+Con el token de un usuario **Operador**:
+- `GET /api/users` → **403** *"Solo un administrador puede gestionar usuarios y roles"* ✅
+- `GET /api/users/roles` → **403** ✅
+- `GET /api/nodes` → **200** (puede leer infraestructura) ✅
+- `GET /api/sites` → **200** (opera aplicaciones/sitios) ✅
+
+Con el token de un usuario **Solo lectura**:
+- `POST /api/databases` (crear BD) → **403** *"Tu rol no permite modificar «Despliegues, sitios web y bases de datos»"* ✅
+- Detener un LXC → **403** *"Tu rol no permite modificar «Máquinas virtuales…»"* ✅
+- Crear usuario → **403** ✅
+- `GET /api/nodes` → **200** ✅
+
+Los tres roles del sistema se comportan según la documentación: el control de permisos se aplica en el **backend**, no es solo visual.
 
 ## Qué queda pendiente
 
-- **No se creó una cuenta Operador** para validar en vivo que *Usuarios* desaparece de su menú y que las escrituras en Infraestructura se rechazan. Es una prueba valiosa del manual (paso 7) pero modifica estado permanente (cambia la lista de cuentas); a ejecutar solo si se autoriza y, en ese caso, con una cuenta claramente desechable.
+- La prueba confirmó el control de acceso server-side para los **3 roles del sistema**. No se validó un rol a medida (escritura solo en un área) creado desde el panel; es el único escenario de roles personalizados sin ejercitar, y requiere la decisión de dejar un rol extra creado.
 
 ## Comandos
 

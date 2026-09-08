@@ -9,8 +9,9 @@ Crea instancias en contenedores dedicados y las administra (`/bases-de-datos`).
 - Las contraseñas se generan en el panel y **se muestran una sola vez** (no se guardan en ningún sitio).
 - Los contenedores de BD son infraestructura protegida y no aparecen en Contenedores LXC (se gestionan desde esta pantalla).
 
-## Qué se hizo para probar (ciclo completo real)
+## Qué se hizo para probar (ciclo completo real, dos motores)
 
+**PostgreSQL 15**
 1. **Crear instancia PostgreSQL 15** (`POST /api/databases`): nodo `nariv`, 1 core / 1 GB / 8 GB disco, IP fija `192.168.8.50/24`. Job de aprovisionamiento → `vmid 106` → estado final *"postgresql 15 listo en 192.168.8.50"*.
 2. **Crear una base** (`appdata`).
 3. **Crear usuarios por nivel** y probar la semántica de permisos.
@@ -18,7 +19,15 @@ Crea instancias en contenedores dedicados y las administra (`/bases-de-datos`).
 5. **Conectarse por TCP** a `192.168.8.50:5432` con un cliente PostgreSQL nativo y ejecutar CRUD real.
 6. **Eliminar la instancia** al terminar y confirmar que la IP dejó de responder.
 
+**MariaDB 11.4**
+1. **Crear instancia MariaDB 11.4** (`POST /api/databases`): IP fija `192.168.8.51/24`. Job → *"mariadb 11.4 listo en 192.168.8.51"*.
+2. **Habilitar acceso remoto** (nota: hasta hacerlo, el puerto 3306 no respondía hacia la red; es el comportamiento esperado, sin estar expuesto por defecto).
+3. **Conectarse por TCP** al puerto 3306 con un cliente MariaDB y ejecutar CRUD real (CREATE/INSERT/SELECT/COUNT).
+4. **Eliminar la instancia**; el puerto 3306 dejó de responder.
+
 ## Resultado
+
+### PostgreSQL
 
 | Acción | Resultado |
 |---|---|
@@ -28,7 +37,21 @@ Crea instancias en contenedores dedicados y las administra (`/bases-de-datos`).
 | Acceso remoto | ✅ habilitado |
 | Conexión TCP real | ✅ PostgreSQL 15.19 (Debian) alcanzable |
 | CRUD (CREATE/INSERT/SELECT) | ✅ con rol `administrador` |
-| Vuelta del contenedor a `local-ai` | ✅ |
+| Limpieza | ✅ contenedor/instancia eliminados |
+
+### MariaDB
+
+| Acción | Resultado |
+|---|---|
+| Instancia MariaDB 11.4 creada | ✅ (IP 192.168.8.51) |
+| Base `qamariadb` | ✅ |
+| Usuario (nivel administrador) | ✅ password auto-generada (1 sola vez) |
+| Acceso remoto | ✅ habilitado (hasta entonces puerto 3306 no escuchaba a la red) |
+| Conexión TCP real | ✅ **11.4.13-MariaDB-deb12** |
+| CRUD (CREATE/INSERT/SELECT/COUNT) | ✅ |
+| Limpieza | ✅ instancia eliminada, puerto 3306 cerrado |
+
+Ambos motores soportados por el panel funcionan de extremo a extremo y se revirtieron tras la prueba (clúster sin instancias BD al cierre).
 
 ### Prueba de permisos (hallazgo relevante)
 
